@@ -5,12 +5,18 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 type YandexClient struct {
 	c       *http.Client
 	baseURL string
 	token   string
+}
+
+type GetResourceResponse struct {
+	Modify time.Time
+	MD5    string
 }
 
 func New(client *http.Client, baseURL string, token string) *YandexClient {
@@ -26,7 +32,7 @@ func (y *YandexClient) IsFileExists(ctx context.Context, path string) (bool, err
 	if err != nil {
 		return false, fmt.Errorf("failed create get resource request: %w", err)
 	}
-	
+
 	req.Header.Set("Authorization", "OAuth "+y.token)
 
 	resp, err := y.c.Do(req)
