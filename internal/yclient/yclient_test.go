@@ -12,16 +12,10 @@ import (
 )
 
 const baseYandexAPIURL = "https://cloud-api.yandex.net"
+const existedPath = "/test_private_osync/item_1.docx"
 
 func TestYandexClient_IsFileExistsIntegration(t *testing.T) {
-	if testing.Short() {
-		t.Skip("integration test for yandex client skipped...")
-	}
-
-	token := os.Getenv("Y_DISK_TOKEN")
-	if len(token) == 0 {
-		t.Skip("token for yandex disk not set. skipping...")
-	}
+	token := getToken(t)
 
 	client := &http.Client{}
 	yClient := New(client, baseYandexAPIURL, token)
@@ -30,7 +24,7 @@ func TestYandexClient_IsFileExistsIntegration(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
 
-		got, err := yClient.IsFileExists(ctx, "/test_private_osync/item_1.docx")
+		got, err := yClient.IsFileExists(ctx, existedPath)
 
 		require.NoErrorf(t, err, "unexpected error from yclient")
 		assert.Truef(t, got, "expected file be found on yandex disk")
@@ -64,4 +58,34 @@ func TestYandexClient_IsFileExistsIntegration(t *testing.T) {
 
 		require.Errorf(t, err, "expected error from yclient becouse of context timeout")
 	})
+}
+
+func TestYandexClient_GetResource(t *testing.T) {
+	c := &http.Client{}
+	token := getToken(t)
+	yClient := New(c, baseYandexAPIURL, token)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	expectedModify, err := time.Parse(time.DateTime, "2020-01-01 00:00:00")
+
+	got, err := yClient.GetResource(ctx, existedPath)
+
+	require.NoErrorf(t, err, "expected file to be found and dont have error")
+	assert.Truef(t, got.GetModify().After(expectedModify), "expected file be modified after 2020 year")
+	assert.Truef(t, len(got.GetMD5()) > 0, "expected to file hash not empty")
+}
+
+func getToken(t *testing.T) string {
+	t.Helper()
+	if testing.Short() {
+		t.Skip("integration test for yandex client skipped...")
+	}
+
+	token := os.Getenv("Y_DISK_TOKEN")
+	if len(token) == 0 {
+		t.Skip("token for yandex disk not set. skipping...")
+	}
+
+	return token
 }
