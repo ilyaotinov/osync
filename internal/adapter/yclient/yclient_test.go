@@ -68,6 +68,7 @@ func TestYandexClient_GetResource(t *testing.T) {
 	defer cancel()
 
 	expectedModify, err := time.Parse(time.DateTime, "2020-01-01 00:00:00")
+	require.NoError(t, err)
 
 	got, err := yClient.GetResource(ctx, existedPath)
 

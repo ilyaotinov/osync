@@ -19,8 +19,8 @@ type YandexClient struct {
 }
 
 type GetResourceResponse struct {
-	MD5      string    `json:"md5"`
 	Modified time.Time `json:"modified"`
+	MD5      string    `json:"md5"`
 }
 
 func New(client *http.Client, baseURL string, token string) *YandexClient {

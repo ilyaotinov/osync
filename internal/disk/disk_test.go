@@ -205,13 +205,11 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			d := New(tt.filesystem)
 
 			got, err := d.GetFileModificationInfo(tt.arg.ctxFunc(), tt.arg.path)
-
 			if tt.expect.err {
 				require.Error(t, err)
 
