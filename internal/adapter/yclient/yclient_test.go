@@ -12,7 +12,10 @@ import (
 )
 
 const baseYandexAPIURL = "https://cloud-api.yandex.net"
-const existedPath = "/test_private_osync/item_1.docx"
+const (
+	existedPath       = "/test_private_osync/item_1.docx"
+	existedFolderPath = "/test_private_osync"
+)
 
 func TestYandexClient_IsFileExistsIntegration(t *testing.T) {
 	token := getToken(t)
@@ -60,7 +63,7 @@ func TestYandexClient_IsFileExistsIntegration(t *testing.T) {
 	})
 }
 
-func TestYandexClient_GetResource(t *testing.T) {
+func TestYandexClient_GetResource_File(t *testing.T) {
 	c := &http.Client{}
 	token := getToken(t)
 	yClient := New(c, baseYandexAPIURL, token)
@@ -75,6 +78,25 @@ func TestYandexClient_GetResource(t *testing.T) {
 	require.NoErrorf(t, err, "expected file to be found and dont have error")
 	assert.Truef(t, got.Modify().After(expectedModify), "expected file be modified after 2020 year")
 	assert.Truef(t, len(got.MD5()) > 0, "expected to file hash not empty")
+	assert.Falsef(t, got.IsDIR(), "expect file is dir was false")
+}
+
+func TestYandexClient_GetResource_Dir(t *testing.T) {
+	c := &http.Client{}
+	token := getToken(t)
+	yClient := New(c, baseYandexAPIURL, token)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	expectedModify, err := time.Parse(time.DateTime, "2020-01-01 00:00:00")
+	require.NoError(t, err)
+
+	got, err := yClient.GetResource(ctx, existedFolderPath)
+
+	require.NoErrorf(t, err, "expected file to be found and dont have error")
+	assert.Truef(t, got.Modify().After(expectedModify), "expected folder be modified after 2020 year")
+	assert.Truef(t, len(got.MD5()) == 0, "expected to folder hash be empty")
+	assert.Truef(t, got.IsDIR(), "expect file is dir")
 }
 
 func getToken(t *testing.T) string {

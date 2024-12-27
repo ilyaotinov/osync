@@ -39,6 +39,11 @@ type YandexClient struct {
 type GetResourceResponse struct {
 	Modified time.Time `json:"modified"`
 	MD5      string    `json:"md5"`
+	Type     string    `json:"type"`
+}
+
+func (r GetResourceResponse) IsDIR() bool {
+	return r.Type == "dir"
 }
 
 func New(client *http.Client, baseURL string, token string) *YandexClient {
@@ -122,7 +127,7 @@ func (y *YandexClient) GetResource(ctx context.Context, path string) (file.File,
 	return Resource{
 		MD5Data:    resourceResponse.MD5,
 		ModifyData: resourceResponse.Modified,
-		IsDIRData:  false,
+		IsDIRData:  resourceResponse.IsDIR(),
 	}, nil
 }
 

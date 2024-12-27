@@ -48,6 +48,7 @@ func TestFilesystem_GetResource(t *testing.T) {
 		"expected modify time to be after actual modify time",
 	)
 	assert.Equal(t, expectedHash, resource.MD5())
+	assert.Falsef(t, resource.IsDIR(), "expect file has is dir false")
 }
 
 func TestFilesystem_GetResource_GetDirectory(t *testing.T) {
@@ -67,6 +68,7 @@ func TestFilesystem_GetResource_GetDirectory(t *testing.T) {
 	assert.Equal(t, got.MD5(), "")
 	assert.Truef(t,
 		got.Modify().After(time.Now().Add(time.Second*-1)), "expected modify time to be after actual modify time")
+	assert.Truef(t, got.IsDIR(), "expect directory has is dir true")
 }
 
 func TestFilesystem_IsFileExists_FileExists(t *testing.T) {
