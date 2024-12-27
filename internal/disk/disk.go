@@ -7,9 +7,11 @@ import (
 	"github.com/ilyaotinov/osync/internal/file"
 )
 
+type WalkFunc func(path string, info *file.File) error
+
 type Filesystem interface {
 	IsFileExists(ctx context.Context, path string) (bool, error)
-	GetResource(ctx context.Context, path string) (*file.File, error)
+	GetResource(ctx context.Context, path string) (file.File, error)
 }
 
 type Disk struct {
@@ -39,22 +41,19 @@ func (d *Disk) IsFileExists(ctx context.Context, path string) (bool, error) {
 	return res, nil
 }
 
-func (d *Disk) GetFileModificationInfo(ctx context.Context, path string) (file.ModifyInfo, error) {
+func (d *Disk) GetFileInfo(ctx context.Context, path string) (file.File, error) {
 	if ctx == nil {
-		return file.ModifyInfo{}, fmt.Errorf("ctx cannot be nil")
+		return nil, fmt.Errorf("ctx cannot be nil")
 	}
 
 	if len(path) == 0 {
-		return file.ModifyInfo{}, fmt.Errorf("path cannot be empty")
+		return nil, fmt.Errorf("path cannot be empty")
 	}
 
 	f, err := d.filesystem.GetResource(ctx, path)
 	if err != nil {
-		return file.ModifyInfo{}, fmt.Errorf("failed get file info from filesystem: %w", err)
+		return nil, fmt.Errorf("failed get file info from filesystem: %w", err)
 	}
 
-	return file.ModifyInfo{
-		ModifyDate: f.GetModify(),
-		Hash:       f.GetMD5(),
-	}, nil
+	return f, nil
 }
