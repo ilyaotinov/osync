@@ -104,9 +104,11 @@ func TestDisk_IsFileExists(t *testing.T) {
 
 func TestDisk_GetFileModificationInfo(t *testing.T) {
 	type expect struct {
+		name string
 		hash string
 		mod  time.Time
-		err  bool
+		err,
+		isDir bool
 	}
 
 	type arg struct {
@@ -130,6 +132,7 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 							MD5Data:    "hash-expectedd",
 							ModifyData: mod,
 							IsDIRData:  false,
+							NameData:   "name",
 						}
 					}(),
 				},
@@ -143,7 +146,8 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 
 					return res
 				}(),
-				err: false,
+				err:  false,
+				name: "name",
 			},
 		},
 		{
@@ -210,6 +214,28 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 				err: true,
 			},
 		},
+		{
+			name: "check directory on is dir method",
+			filesystem: &fake.Filesystem{
+				Files: map[string]file.File{
+					"/path": fake.File{
+						ModifyData: time.Time{},
+						MD5Data:    "hash",
+						IsDIRData:  true,
+					},
+				},
+			},
+			arg: arg{
+				ctxFunc: context.Background,
+				path:    "/path",
+			},
+			expect: expect{
+				hash:  "hash",
+				mod:   time.Time{},
+				err:   false,
+				isDir: true,
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -225,6 +251,8 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 			}
 			assert.Equal(t, tt.expect.mod, got.Modify())
 			assert.Equal(t, tt.expect.hash, got.MD5())
+			assert.Equal(t, tt.expect.isDir, got.IsDIR())
+			assert.Equal(t, tt.expect.name, got.Name())
 		})
 	}
 }

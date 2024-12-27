@@ -72,6 +72,7 @@ func TestYandexClient_GetResource_File(t *testing.T) {
 
 	expectedModify, err := time.Parse(time.DateTime, "2020-01-01 00:00:00")
 	require.NoError(t, err)
+	expectedName := "item_1.docx"
 
 	got, err := yClient.GetResource(ctx, existedPath)
 
@@ -79,6 +80,7 @@ func TestYandexClient_GetResource_File(t *testing.T) {
 	assert.Truef(t, got.Modify().After(expectedModify), "expected file be modified after 2020 year")
 	assert.Truef(t, len(got.MD5()) > 0, "expected to file hash not empty")
 	assert.Falsef(t, got.IsDIR(), "expect file is dir was false")
+	assert.Equal(t, expectedName, got.Name())
 }
 
 func TestYandexClient_GetResource_Dir(t *testing.T) {

@@ -41,6 +41,9 @@ func TestFilesystem_GetResource(t *testing.T) {
 
 	resource, err := fsystem.GetResource(ctx, path)
 
+	expectedFInfo, err := tmpFile.Stat()
+	require.NoError(t, err)
+
 	require.NoError(t, err)
 	assert.Truef(
 		t,
@@ -49,6 +52,7 @@ func TestFilesystem_GetResource(t *testing.T) {
 	)
 	assert.Equal(t, expectedHash, resource.MD5())
 	assert.Falsef(t, resource.IsDIR(), "expect file has is dir false")
+	assert.Equal(t, expectedFInfo.Name(), resource.Name())
 }
 
 func TestFilesystem_GetResource_GetDirectory(t *testing.T) {

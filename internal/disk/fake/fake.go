@@ -10,8 +10,13 @@ import (
 
 type File struct {
 	ModifyData time.Time
+	NameData   string
 	MD5Data    string
 	IsDIRData  bool
+}
+
+func (f File) Name() string {
+	return f.NameData
 }
 
 func (f File) Modify() time.Time {

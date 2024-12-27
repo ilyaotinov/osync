@@ -17,7 +17,12 @@ import (
 type File struct {
 	ModifyData time.Time
 	MD5Data    string
+	NameData   string
 	IsDIRData  bool
+}
+
+func (f File) Name() string {
+	return f.NameData
 }
 
 func (f File) Modify() time.Time {
@@ -67,6 +72,7 @@ func (f Filesystem) GetResource(ctx context.Context, path string) (file.File, er
 		ModifyData: fInfo.ModTime(),
 		MD5Data:    hash,
 		IsDIRData:  fInfo.IsDir(),
+		NameData:   fInfo.Name(),
 	}
 
 	return result, nil

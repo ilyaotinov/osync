@@ -15,7 +15,12 @@ import (
 type Resource struct {
 	ModifyData time.Time
 	MD5Data    string
+	NameData   string
 	IsDIRData  bool
+}
+
+func (r Resource) Name() string {
+	return r.NameData
 }
 
 func (r Resource) Modify() time.Time {
@@ -40,6 +45,7 @@ type GetResourceResponse struct {
 	Modified time.Time `json:"modified"`
 	MD5      string    `json:"md5"`
 	Type     string    `json:"type"`
+	Name     string    `json:"name"`
 }
 
 func (r GetResourceResponse) IsDIR() bool {
@@ -128,6 +134,7 @@ func (y *YandexClient) GetResource(ctx context.Context, path string) (file.File,
 		MD5Data:    resourceResponse.MD5,
 		ModifyData: resourceResponse.Modified,
 		IsDIRData:  resourceResponse.IsDIR(),
+		NameData:   resourceResponse.Name,
 	}, nil
 }
 
