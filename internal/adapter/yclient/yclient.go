@@ -12,6 +12,24 @@ import (
 	"github.com/ilyaotinov/osync/internal/file"
 )
 
+type Resource struct {
+	ModifyData time.Time
+	MD5Data    string
+	IsDIRData  bool
+}
+
+func (r Resource) Modify() time.Time {
+	return r.ModifyData
+}
+
+func (r Resource) MD5() string {
+	return r.MD5Data
+}
+
+func (r Resource) IsDIR() bool {
+	return r.IsDIRData
+}
+
 type YandexClient struct {
 	c       *http.Client
 	baseURL string
@@ -67,7 +85,7 @@ func (y *YandexClient) IsFileExists(ctx context.Context, path string) (bool, err
 	return true, nil
 }
 
-func (y *YandexClient) GetResource(ctx context.Context, path string) (*file.File, error) {
+func (y *YandexClient) GetResource(ctx context.Context, path string) (file.File, error) {
 	fullURL, err := y.buildURL("/v1/disk/resources", map[string]string{
 		"path": path,
 	})
@@ -96,14 +114,16 @@ func (y *YandexClient) GetResource(ctx context.Context, path string) (*file.File
 		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
-	resource := &GetResourceResponse{}
-	if err = json.NewDecoder(resp.Body).Decode(resource); err != nil {
+	resourceResponse := &GetResourceResponse{}
+	if err = json.NewDecoder(resp.Body).Decode(resourceResponse); err != nil {
 		return nil, fmt.Errorf("failed to decode GET resource body: %w", err)
 	}
 
-	res := &file.File{}
-
-	return res.SetModify(resource.Modified).SetMD5(resource.MD5), nil
+	return Resource{
+		MD5Data:    resourceResponse.MD5,
+		ModifyData: resourceResponse.Modified,
+		IsDIRData:  false,
+	}, nil
 }
 
 func (y *YandexClient) buildURL(endpoint string, queryParams map[string]string) (string, error) {

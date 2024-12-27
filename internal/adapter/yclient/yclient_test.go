@@ -73,8 +73,8 @@ func TestYandexClient_GetResource(t *testing.T) {
 	got, err := yClient.GetResource(ctx, existedPath)
 
 	require.NoErrorf(t, err, "expected file to be found and dont have error")
-	assert.Truef(t, got.GetModify().After(expectedModify), "expected file be modified after 2020 year")
-	assert.Truef(t, len(got.GetMD5()) > 0, "expected to file hash not empty")
+	assert.Truef(t, got.Modify().After(expectedModify), "expected file be modified after 2020 year")
+	assert.Truef(t, len(got.MD5()) > 0, "expected to file hash not empty")
 }
 
 func getToken(t *testing.T) string {

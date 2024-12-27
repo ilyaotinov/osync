@@ -24,15 +24,15 @@ func TestDisk_IsFileExists(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		filesystem *fake.FakeFilesystem
+		filesystem *fake.Filesystem
 		args       args
 		expect     expect
 	}{
 		{
 			name: "file found case",
-			filesystem: &fake.FakeFilesystem{
-				Files: map[string]*file.File{
-					"/path": {},
+			filesystem: &fake.Filesystem{
+				Files: map[string]file.File{
+					"/path": fake.File{},
 				},
 				AlwaysReturnErr: false,
 			},
@@ -41,8 +41,8 @@ func TestDisk_IsFileExists(t *testing.T) {
 		},
 		{
 			name: "file not found case",
-			filesystem: &fake.FakeFilesystem{
-				Files:           map[string]*file.File{},
+			filesystem: &fake.Filesystem{
+				Files:           map[string]file.File{},
 				AlwaysReturnErr: false,
 			},
 			args: args{
@@ -56,9 +56,9 @@ func TestDisk_IsFileExists(t *testing.T) {
 		},
 		{
 			name: "null ctx given",
-			filesystem: &fake.FakeFilesystem{
-				Files: map[string]*file.File{
-					"/path": {},
+			filesystem: &fake.Filesystem{
+				Files: map[string]file.File{
+					"/path": fake.File{},
 				},
 				AlwaysReturnErr: false,
 			},
@@ -75,7 +75,7 @@ func TestDisk_IsFileExists(t *testing.T) {
 		},
 		{
 			name:       "empty path given",
-			filesystem: &fake.FakeFilesystem{},
+			filesystem: &fake.Filesystem{},
 			args: args{
 				ctxFunc: context.Background,
 				path:    "",
@@ -116,18 +116,21 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		filesystem *fake.FakeFilesystem
+		filesystem *fake.Filesystem
 		arg        arg
 		expect     expect
 	}{
 		{
 			name: "success case",
-			filesystem: &fake.FakeFilesystem{
-				Files: map[string]*file.File{
-					"/path": func() *file.File {
+			filesystem: &fake.Filesystem{
+				Files: map[string]file.File{
+					"/path": func() file.File {
 						mod, _ := time.Parse(time.DateTime, "2024-01-02 00:00:00")
-						file := &file.File{}
-						return file.SetMD5("hash-expectedd").SetModify(mod)
+						return fake.File{
+							MD5Data:    "hash-expectedd",
+							ModifyData: mod,
+							IsDIRData:  false,
+						}
 					}(),
 				},
 				AlwaysReturnErr: false,
@@ -145,12 +148,13 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 		},
 		{
 			name: "null ctx given",
-			filesystem: &fake.FakeFilesystem{
-				Files: map[string]*file.File{
-					"/path": func() *file.File {
-						f := &file.File{}
-						return f.SetMD5("test").SetModify(time.Now())
-					}(),
+			filesystem: &fake.Filesystem{
+				Files: map[string]file.File{
+					"/path": fake.File{
+						MD5Data:    "test-hash",
+						ModifyData: time.Now(),
+						IsDIRData:  false,
+					},
 				},
 				AlwaysReturnErr: false,
 			},
@@ -168,12 +172,13 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 		},
 		{
 			name: "empty path",
-			filesystem: &fake.FakeFilesystem{
-				Files: map[string]*file.File{
-					"": func() *file.File {
-						f := &file.File{}
-						return f.SetModify(time.Now()).SetMD5("test-hash")
-					}(),
+			filesystem: &fake.Filesystem{
+				Files: map[string]file.File{
+					"": fake.File{
+						MD5Data:    "test-hash",
+						ModifyData: time.Now(),
+						IsDIRData:  false,
+					},
 				},
 				AlwaysReturnErr: false,
 			},
@@ -187,12 +192,13 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 		},
 		{
 			name: "internal file storage error",
-			filesystem: &fake.FakeFilesystem{
-				Files: map[string]*file.File{
-					"/path": func() *file.File {
-						f := &file.File{}
-						return f.SetMD5("hash").SetModify(time.Now())
-					}(),
+			filesystem: &fake.Filesystem{
+				Files: map[string]file.File{
+					"/path": fake.File{
+						MD5Data:    "hash",
+						ModifyData: time.Now(),
+						IsDIRData:  false,
+					},
 				},
 				AlwaysReturnErr: true,
 			},
@@ -209,7 +215,7 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			d := New(tt.filesystem)
 
-			got, err := d.GetFileModificationInfo(tt.arg.ctxFunc(), tt.arg.path)
+			got, err := d.GetFileInfo(tt.arg.ctxFunc(), tt.arg.path)
 			if tt.expect.err {
 				require.Error(t, err)
 
@@ -217,8 +223,8 @@ func TestDisk_GetFileModificationInfo(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-			assert.Equal(t, tt.expect.mod, got.ModifyDate)
-			assert.Equal(t, tt.expect.hash, got.Hash)
+			assert.Equal(t, tt.expect.mod, got.Modify())
+			assert.Equal(t, tt.expect.hash, got.MD5())
 		})
 	}
 }

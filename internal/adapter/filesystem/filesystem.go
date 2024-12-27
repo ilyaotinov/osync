@@ -4,13 +4,33 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/ilyaotinov/osync/internal/file"
 )
+
+type File struct {
+	ModifyData time.Time
+	MD5Data    string
+	IsDIRData  bool
+}
+
+func (f File) Modify() time.Time {
+	return f.ModifyData
+}
+
+func (f File) MD5() string {
+	return f.MD5Data
+}
+
+func (f File) IsDIR() bool {
+	return f.IsDIRData
+}
 
 type Filesystem struct {
 }
@@ -20,24 +40,36 @@ func New() *Filesystem {
 }
 
 func (f Filesystem) IsFileExists(ctx context.Context, path string) (bool, error) {
-	// TODO implement me
-	panic("implement me")
+	if _, err := os.Stat(path); err == nil {
+		return true, nil
+	} else if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	} else {
+		return false, fmt.Errorf("error check file for existence: %w", err)
+	}
 }
 
-func (f Filesystem) GetResource(ctx context.Context, path string) (*file.File, error) {
+func (f Filesystem) GetResource(ctx context.Context, path string) (file.File, error) {
 	fInfo, err := os.Stat(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 
-	hash, err := getFileMD5(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate hash of file: %w", err)
+	var hash string
+	if !fInfo.IsDir() {
+		hash, err = getFileMD5(path)
+		if err != nil {
+			return nil, fmt.Errorf("failed to calculate hash of file: %w", err)
+		}
 	}
 
-	result := &file.File{}
+	result := File{
+		ModifyData: fInfo.ModTime(),
+		MD5Data:    hash,
+		IsDIRData:  fInfo.IsDir(),
+	}
 
-	return result.SetModify(fInfo.ModTime()).SetMD5(hash), nil
+	return result, nil
 }
 
 func getFileMD5(filePath string) (string, error) {
